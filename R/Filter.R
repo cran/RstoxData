@@ -16,6 +16,13 @@
 filterData <- function(inputData, filterExpression, propagateDownwards = TRUE, propagateUpwards = FALSE) {
     
 	`%notin%` <- Negate(`%in%`)
+	
+	`%notequal%` <- function(x, table) is.na(x) | x %notin% table
+	
+	
+
+	
+	
 
 	processFilter <- function(filters) {
 		# Assume each individual filters relation are the AND (&) operator 
@@ -204,7 +211,7 @@ expandFilterExpressionList <- function(FilterExpressionList, sep = "/") {
 #'
 #' @param BioticData  Input \code{\link{BioticData}} data.
 #' @param FilterExpression Filter expression given as a list of strings. The name of the list and structures should be identical to the names of the input data list. To extract or exclude missing values (NAs) use the operator \code{\%in\%} or the special operator \code{\%notin\%}, which is defined in RstoxData.
-#' @param FilterUpwards Whether the filter action will propagate in the upwards direction. Default to FALSE.
+#' @param FilterUpwards Whether the filter action will propagate in the upwards direction. Default to FALSE. Use this option with caution, particularly for swept-area survey estimates, where setting \code{FilterUpwards} to TRUE could affect the estimated mean density.
 #'
 #' @return An object of filtered data in the same format as the input data.
 #'
@@ -287,4 +294,48 @@ FilterStoxAcoustic <- function(StoxAcousticData, FilterExpression, FilterUpwards
         propagateDownwards = TRUE, 
         propagateUpwards = FilterUpwards
     )
+}
+
+#' Filter StoxLanding data
+#'
+#' Filters \code{\link{StoxLandingData}}.
+#' 
+#' @param StoxLandingData  Input \code{\link{StoxLandingData}} data.
+#' @param FilterExpression Filter expression in list of strings. The name of the list and structures should be identical to the names of the input data list.
+#'
+#' @return An object of filtered data in the same format as the input data.
+#'
+#' @export
+#' 
+FilterStoxLanding <- function(StoxLandingData, FilterExpression) {
+  
+  StoxLandingData <- filterData(
+    StoxLandingData, 
+    filterExpression = FilterExpression, 
+    propagateDownwards = TRUE, 
+    propagateUpwards = FALSE
+  )
+  
+  return(StoxLandingData)
+}
+
+#' Filter LandingData
+#'
+#' Filters \code{\link{LandingData}}.
+#' 
+#' @param LandingData  Input \code{\link{LandingData}} data.
+#' @param FilterExpression Filter expression in list of strings. The name of the list and structures should be identical to the names of the input data list.
+#' @param FilterUpwards Whether the filter action will propagate in the upwards direction. Default to FALSE.
+#'
+#' @return An object of filtered data in the same format as the input data.
+#'
+#' @export
+#' 
+FilterLanding <- function(LandingData, FilterExpression, FilterUpwards = FALSE) {
+  filterData(
+    LandingData, 
+    filterExpression = FilterExpression, 
+    propagateDownwards = TRUE, 
+    propagateUpwards = FilterUpwards
+  )
 }
