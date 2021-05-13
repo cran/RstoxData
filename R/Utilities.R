@@ -93,7 +93,7 @@ mergeByIntersect <- function(x, y, ..., msg = FALSE) {
 			output <- merge(x, y, by = by, ...)
 		}
 		else {
-			stop("No intersect between the names of x and y")
+			stop("No intersect between the names of ", deparse(substitute(x)), " and ", deparse(substitute(y)))
 		}
 	}
 	
@@ -219,24 +219,33 @@ get_os <- function() {
 	}
 }
 
-# Pick a suitable number of cores
-#' @importFrom parallel detectCores
-getCores <- function() {
-	cores <- as.integer(getOption("mc.cores"))
-	if (length(cores) == 0 || is.na(cores)) {
-		cores <- parallel::detectCores()
-		if (is.na(cores)) {
-			return(1)
-		} else {
-			# Don't use too many cores in autodetect
-			if (cores > 4)
-				return(4)
-			else
-				return(cores)
-		}
-	} else {
-		return(cores)
+#' Pick a suitable number of cores
+#'
+#' @inheritParams lapplyOnCores
+#' @param n Optional length of the data to apply parallel processing to.
+#'
+#' @return The number of cores to apply.
+#'
+#' @export
+#' 
+getNumberOfCores <- function(NumberOfCores = NULL, n = NULL) {
+	# Detect number of cores if not given:
+	if(!length(NumberOfCores)) {
+		NumberOfCores <- as.integer(getOption("mc.cores"))
+		if (!length(NumberOfCores) || is.na(NumberOfCores)) {
+			NumberOfCores <- parallel::detectCores()
+			if (is.na(NumberOfCores)) {
+				return(1)
+			}
+		} 
 	}
+	
+	# Do not use more cores than the number of elemens:
+	if(length(n)) {
+		NumberOfCores <- min(n, NumberOfCores)
+	}
+	
+	return(NumberOfCores)
 }
 
 #' Run a function on all elements of x on one or more cores
@@ -252,11 +261,7 @@ getCores <- function() {
 #' 
 lapplyOnCores <- function(x, FUN, NumberOfCores = 1L, ...) {
 	# Get the number of cores to use:
-	if(length(NumberOfCores) == 0) {
-		NumberOfCores <- getCores()
-	}
-	# Do not use more cores than the number of files:
-	NumberOfCores <- min(length(x), NumberOfCores)
+	NumberOfCores <- getNumberOfCores(NumberOfCores, n = length(x))
 	
 	# Simple Lapply if onle one core:
 	if(NumberOfCores == 1) {
@@ -277,6 +282,9 @@ lapplyOnCores <- function(x, FUN, NumberOfCores = 1L, ...) {
 			out <- parallel::mclapply(x, FUN, mc.cores = NumberOfCores, ...)
 		}
 	}
+	else {
+		out <- NULL
+	}
 	
 	return(out)
 }
@@ -291,19 +299,9 @@ lapplyOnCores <- function(x, FUN, NumberOfCores = 1L, ...) {
 #'
 #' @export
 #' 
-mapplyOnCores <- function(FUN, NumberOfCores = integer(), ..., MoreArgs = NULL, SIMPLIFY = FALSE) {
+mapplyOnCores <- function(FUN, NumberOfCores = 1L, ..., MoreArgs = NULL, SIMPLIFY = FALSE) {
 	# Get the number of cores to use:
-	if(length(NumberOfCores) == 0) {
-		NumberOfCores <- getCores()
-	}
-	# Do not use more cores than the number of files:
-	lll <- list(...)
-	if(length(lll)) {
-		NumberOfCores <- min(length(lll[[1]]), NumberOfCores)
-	}
-	else {
-		NumberOfCores <- 1
-	}
+	NumberOfCores <- getNumberOfCores(NumberOfCores, n = max(lengths(list(...))))
 	
 	# Simple mapply if only one core:
 	if(NumberOfCores == 1) {
@@ -320,6 +318,9 @@ mapplyOnCores <- function(FUN, NumberOfCores = integer(), ..., MoreArgs = NULL, 
 		else {
 			out <- parallel::mcmapply(FUN, mc.cores = NumberOfCores, ..., MoreArgs = MoreArgs, SIMPLIFY = SIMPLIFY)
 		}
+	}
+	else {
+		out <- NULL
 	}
 	
 	return(out)
@@ -367,6 +368,8 @@ setPrecisionLevelOneDT <- function(DT, digits, signifDigits) {
 
 roundSignif <- function(x, digits = 12, signifDigits = NULL) {
 	if(length(signifDigits)) {
+		# Use this in the future when units are implemented for all variables in all data type (unitsless being those without unit). Units can be added and remoevd so that we end up with only the units we need, and can display these in the documentation:
+		# digits <- pmax(signifDigits - floor(log10(abs(units::drop_units(x)))) - 1, digits)
 		digits <- pmax(signifDigits - floor(log10(abs(x))) - 1, digits)
 	}
 	round(x, digits)
@@ -444,6 +447,8 @@ removeRowsOfDuplicatedKeys <- function(StoxData, stoxDataFormat = c("Biotic", "A
 			data.table::fwrite(dupData, fileToWriteDupDataTo)
 			
 			#warning("StoX: Removing ", sum(duplicatedKeys), " rows of duplicated keys from table ", tableName, ". This may be due to different files with the same keys, e.g. if different acoustic instruments are stored in different files. In such a case the order of the files is crucial, as only the information from the first file is kept. If not different files, then duplicated keys may be an error. To see the duplicated rows run the following in R: dat <- data.table::fread(\"", fileToWriteDupDataTo, "\")")
+			#warning("StoX: Removing ", sum(duplicatedKeys), " rows of duplicated keys from table ", tableName, ". To see the duplicated rows run the following in R: dat <- data.table::fread(\"", fileToWriteDupDataTo, "\"), which contains the column \"duplicated\"")
+			
 			#rowsToKeep <- !duplicatedKeys
 			StoxData[[tableName]] <- StoxData[[tableName]][!duplicatedKeys, ]
 		}
@@ -570,6 +575,10 @@ findVariablesMathcinigVocabularyOne <- function(vocabularyOne, data) {
 	#VariableName <- unlist(lapply(data, function(table) names(which(unlist(table[, lapply(.SD, function(x) any(x %in% vocabularyOne$id))])))))
 	VariableName <- unlist(lapply(data, function(table) names(which(unlist(table[, lapply(.SD, function(x) any(unique(x) %in% vocabularyOne$id))])))))
 	# Add the VariableName to the vocabularyOne
+	if(!length(VariableName)) {
+		# Add NA if no variable was recognized (this avoids warnings when cbind with character(0)
+		VariableName <- NA
+	}
 	vocabularyOne <- cbind(
 		VariableName = VariableName, 
 		vocabularyOne
@@ -626,6 +635,15 @@ createOrderKey <- function(x, split = "/") {
 	if(!is.character(x)) {
 		return(x)
 	}
+	firstNonNA <- x[1]
+	if(is.na(firstNonNA)) {
+		firstNonNA <- x[min(which(!is.na(x)))]
+	}
+	if(!grepl(split, firstNonNA)) {
+		return(x)
+	}
+	
+	# Split the vector by the 'split' parameter:
 	splitted <- strsplit(x, split)
 	
 	# Check that all have the same number of elements, that is the same number of splits:
@@ -633,9 +651,9 @@ createOrderKey <- function(x, split = "/") {
 		return(x)
 	}
 	
-	# Create a data.table off the splitted elements and get the order of these:
+	# Create a data.table of the splitted elements and get the order of these:
 	splittedDT <- data.table::rbindlist(lapply(splitted, as.list))
-	suppressWarnings(splittedDT[, names(splittedDT) := lapply(.SD, as.numeric)])
+	suppressWarnings(splittedDT[, names(splittedDT) := lapply(.SD, as.numeric_IfPossible)])
 	
 	# Only accept if all elements can be converted to numeric:
 	#if(any(is.na(splittedDT))) {
@@ -646,7 +664,10 @@ createOrderKey <- function(x, split = "/") {
 	}
 	
 	# Convert to integer ranks:
-	splittedDT[, names(splittedDT) := lapply(.SD, function(y) match(y, sort(unique(y))))]
+	#splittedDT[, names(splittedDT) := lapply(.SD, function(y) match(y, sort(unique(y))))]
+	# Replicate data.table's soring which happend in C-locale (see ?data.table::setorderv):
+	splittedDT[, names(splittedDT) := lapply(.SD, function(y) match(y, stringi::stri_sort(unique(y), locale = "C")))]
+	
 
 	# Count the maximum number of digits for each column, and multiply by the cummulative number of digits:
 	numberOfDigits <- splittedDT[, lapply(.SD, max)]
@@ -665,4 +686,14 @@ createOrderKey <- function(x, split = "/") {
 	#orderKey <- match(seq_along(x), orderOfSplitted)
 	#
 	return(orderKey)
+}
+
+as.numeric_IfPossible <- function(x) {
+	num <- as.numeric(x)
+	if(all(is.na(num))) {
+		return(x)
+	}
+	else {
+		return(num)
+	}
 }

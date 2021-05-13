@@ -1,6 +1,6 @@
 Package: RstoxData
-Version: 1.1.1
-Date: 2021-02-23
+Version: 1.1.8
+Date: 2021-05-10
 Title: Tools to Read and Manipulate Fisheries Data
 Authors@R: c(
   person(given = "Ibrahim", 
@@ -33,12 +33,13 @@ BugReports: https://github.com/StoXProject/RstoxData/issues
 License: LGPL-3
 LazyData: true
 Encoding: UTF-8
-Imports: data.table (>= 1.12.6), Rcpp (>= 1.0.0), xml2 (>= 1.2.2)
+Imports: data.table (>= 1.12.6), Rcpp (>= 1.0.0), xml2 (>= 1.2.2), xslt
+        (>= 1.4), units (>= 0.7), stringi (>= 1.4.3)
 Suggests: testthat
 LinkingTo: Rcpp
 RoxygenNote: 7.1.1
 NeedsCompilation: yes
-Packaged: 2021-03-05 09:01:07 UTC; baim
+Packaged: 2021-05-13 08:50:46 UTC; baim
 Author: Ibrahim Umar [cre, aut],
   Sindre Vatnehol [aut],
   Arne Johannes Holmin [aut],
@@ -47,4 +48,4 @@ Author: Ibrahim Umar [cre, aut],
   Norwegian Institute of Marine Research [cph, fnd]
 Maintainer: Ibrahim Umar <ibrahim.umar@hi.no>
 Repository: CRAN
-Date/Publication: 2021-03-05 10:20:07 UTC
+Date/Publication: 2021-05-13 09:22:14 UTC

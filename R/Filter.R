@@ -10,7 +10,7 @@
 #' @return An object of filtered data in the same format as the input data.
 #'
 #' @importFrom utils head
-#' @importFrom data.table fsetdiff is.data.table %like% %flike% %ilike% %inrange% %chin% %between%
+#' @importFrom data.table fsetdiff fintersect is.data.table %like% %flike% %ilike% %inrange% %chin% %between%
 #' @export
 #' 
 filterData <- function(inputData, filterExpression, propagateDownwards = TRUE, propagateUpwards = FALSE) {
@@ -21,10 +21,18 @@ filterData <- function(inputData, filterExpression, propagateDownwards = TRUE, p
 	
 	
 
-	
+	sanitizeFilter <- function(filters) {
+		# Detect one or more "system" followed by 0 or one "2" and 0 or more spaces and then one or more parenthesis start:
+		usesSystem <- grepl("system+2? *\\(+", filters)
+		if(any(usesSystem)) {
+			stop("The following filter expression applies a call to the operating system, and may contain harmful code (please do not try to hack using StoX): ", filters)
+		}
+	}
 	
 
 	processFilter <- function(filters) {
+		# Do not accept system calls in filters:
+		sanitizeFilter(filters)
 		# Assume each individual filters relation are the AND (&) operator 
 		parsedFilterTxt <- paste(filters, collapse=" & ")
 		parsedFilter <- parse(text = parsedFilterTxt)
@@ -89,10 +97,16 @@ filterData <- function(inputData, filterExpression, propagateDownwards = TRUE, p
 						# Find similar columns (assume those are keys)
 						key <- intersect(names(y[[parent - 1]]), names(y[[parent + goDown]]))
 						if(length(key) > 0) {
+							### # Find the not deleted keys after filtering
+							### deleted <- fsetdiff(unique(y[[parent + goDown]][, ..key]), unique(ret[[names(y)[parent + goDown]]][, ..key]))
+							### # Propagate to parent
+							### ret[[names(y)[parent-1]]] <- y[[parent-1]][!deleted, on = names(deleted)]
+							
 							# Find the not deleted keys after filtering
-							deleted <- fsetdiff(unique(y[[parent + goDown]][, ..key]), unique(ret[[names(y)[parent + goDown]]][, ..key]))
+							toKeep <- fintersect(unique(y[[parent + goDown]][, ..key]), unique(ret[[names(y)[parent + goDown]]][, ..key]))
 							# Propagate to parent
-							ret[[names(y)[parent-1]]] <- y[[parent-1]][!deleted, on = names(deleted)]
+							ret[[names(y)[parent-1]]] <- y[[parent-1]][toKeep, on = names(toKeep)]
+							
 						}
 					}
 				}

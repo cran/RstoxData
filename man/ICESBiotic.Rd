@@ -2,11 +2,11 @@
 % Please edit documentation in R/StoxExport.R
 \name{ICESBiotic}
 \alias{ICESBiotic}
-\title{Write ICES biotic CSV format file}
+\title{Convert BioticData to ICESBiotic format}
 \usage{
 ICESBiotic(
   BioticData,
-  SurveyName = "NONE",
+  SurveyName = character(),
   Country = character(),
   Organisation = integer(),
   AllowRemoveSpecies = TRUE
@@ -22,12 +22,12 @@ ICESBiotic(
 \item{Organisation}{An integer code representing the organization running the cruise. See \url{https://vocab.ices.dk/?ref=1398} for a list of possible codes (e.g., Institute of Marine Research: 612).}
 
 \item{AllowRemoveSpecies}{ICES submission will not allow the resulting CSV file to be uploaded if the file contains species not listed in
-https://acoustic.ices.dk/Services/Schema/XML/SpecWoRMS.xml . Setting this parameter to TRUE will remove the unlisted species records.}
+https://acoustic.ices.dk/Services/Schema/XML/SpecWoRMS.xml. Setting this parameter to TRUE will remove the unlisted species records.}
 }
 \value{
-List of data.table objects in the ICES acoustic CSV format.
+An \code{\link{ICESBioticData}} object.
 }
 \description{
-Given an \code{BioticData} object, this function will write an ICES biotic CSV file. Note that this function only supports
-\code{BioticData} object that is created from reading an NMD biotic version 3 XML file.
+Given an \code{\link{BioticData}} object, this function converts to ICESBiotic format. Note that this function only supports
+\code{BioticData} generated from NMDBiotic version > 3 XML files.
 }
