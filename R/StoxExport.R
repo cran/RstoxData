@@ -405,7 +405,7 @@ BioticData_NMDToICESBioticOne <- function(
 		StationName = station,
 		StartTime = ifelse(is.na(stationstartdate) | is.na(stationstarttime), NA, gsub("Z", " ", paste0(stationstartdate, substr(stationstarttime, 1, 5)))),
 		Duration = getTimeDiff(stationstartdate, stationstarttime, stationstopdate, stationstoptime),
-		Validity = getHaulVal(gearcondition, samplequality),
+		Validity = getHaulValiditySimple(gearcondition, samplequality),
 		StartLatitude = latitudestart,
 		StartLongitude = longitudestart,
 		StopLatitude = latitudeend,
@@ -488,9 +488,6 @@ BioticData_NMDToICESBioticOne <- function(
 	# NA means that nothing is subsampled
 	Catch[!is.na(SpeciesCategoryWeight) & is.na(SubsampleWeight), SubsampleWeight := 0]
 	
-	# Set Haul without any catch as invalid hauls
-	'%ni%' <- Negate('%in%')
-	Haul[Number %ni% unique(Catch$Number), Validity := "I"]
 	
 	# Combine required tables for the Biology level
 	indRaw <- BioticData_NMDOne$individual
@@ -500,6 +497,8 @@ BioticData_NMDToICESBioticOne <- function(
 	indRaw <- merge(indRaw, BioticData_NMDOne$agedetermination, by.x=c(baseAge, "preferredagereading"), by.y= c(baseAge, "agedeterminationid"), all.x = TRUE)
 	indRaw <- merge(catchRaw, indRaw, by = intersect(names(catchRaw), names(indRaw)))
 	
+	# Take special care of the agingstructure, which should only be given for individuals with age:
+	indRaw[is.na(age), agingstructure := NA_character_]
 	
 	Biology <- indRaw[, .(
 		LocalID = cruise,
@@ -526,7 +525,9 @@ BioticData_NMDToICESBioticOne <- function(
 		MaturityScale = NA,
 		IndividualAge = age,
 		AgePlusGroup = NA,
-		AgeSource = "Otolith",
+		#AgeSource = "Otolith",
+		# Do not interpret agingstructure, as this should be the responsibility of the user:
+		AgeSource = agingstructure, 
 		GeneticSamplingFlag = NA,
 		StomachSamplingFlag = NA,
 		ParasiteSamplingFlag = NA,
@@ -1258,7 +1259,7 @@ getDayNight <- function(stationstartdate, stationstarttime, latitudestart, longi
 		return(val * (180 / pi))
 	}
 	
-	datetime0 <- as.POSIXct("1990-12-30", tz = "GMT")
+	datetime0 <- as.POSIXct("1990-12-30", tz = "UTC")
 	
 	uniqueDates <- unique(stationstartdate)
 	
@@ -1274,7 +1275,7 @@ getDayNight <- function(stationstartdate, stationstarttime, latitudestart, longi
 		nDays <- nDaysA[idx]
 		lat <- latitudestart[idx]
 		lng <- longitudestart[idx]
-		localdate <- as.POSIXct(uniqueDates[idx], tz = "GMT")
+		localdate <- as.POSIXct(uniqueDates[idx], tz = "UTC")
 		
 		# Compute
 		# Letters correspond to colums in the NOAA Excel
@@ -1332,7 +1333,7 @@ getDayNight <- function(stationstartdate, stationstarttime, latitudestart, longi
 		}
 	}
 	
-	datetime <- as.POSIXct(gsub("Z", " ", paste0(stationstartdate, stationstarttime)), tz = "GMT")
+	datetime <- as.POSIXct(gsub("Z", " ", paste0(stationstartdate, stationstarttime)), tz = "UTC")
 	
 	return(unlist(lapply(datetime, getDN, ssTab)))
 }
@@ -1359,8 +1360,14 @@ convLenMeasType <- function(LenMeasType) {
 # Convert aging structure source
 # http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/dataset/agingstructure?version=2.0
 # http://vocab.ices.dk/?ref=1507
+# This function seems to incorrect, as the AgeSource documentation on here only lists three values:
+# http://vocab.ices.dk/?ref=1482
 convAgeSource <- function(AgeSource) {
 	# Convert table
+	if(!all(AgeSource %in% c("1", "2", "7"))) {
+		warning("The conversion from agingstructure to AgeSource may be wrong for other values than 1, 2 and 7. Please noify the developers of StoX.")
+	}
+	
 	ct <- c("1" = "scale",
 			"2" = "otolith",
 			"4" = "df-spine",
@@ -1369,6 +1376,17 @@ convAgeSource <- function(AgeSource) {
 			"8" = "caudal-thorn")
 	return(ct[AgeSource])
 }
+
+
+#translateAgeSource <- function(agingstructure) {
+#	# Convert table:
+#	ct <- c(
+#		"1" = "Scale",
+#		"2" = "Otolith",
+#		"7" = "Vertebra"
+#	)
+#	return(ct[agingstructure])
+#}
 
 roundDrop0 <- function(x, digits = 0) {
 	notNA <- !is.na(x)

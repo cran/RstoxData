@@ -1,6 +1,21 @@
+# RstoxData v1.2.0 (2021-06-18)
+* Final version for the release of StoX 3.1.0.
+
+# RstoxData v1.1.16 (2021-06-16)
+* Fixed bug in StoxBiotic(), where date and time were borrowed from Station to Haul, which could crash due to missing values in StationKey.
+* Removed interpretation of agingstructure in ICESBiotic().
+
+# RstoxData v1.1.13 (2021-06-07)
+* Changed to sort in en_US_POSIX-locale in createOrderKey() using the stringi-package, which ensures platform independence while replicating sorting done by data.table.
+
+# RstoxData v1.1.9 (2021-05-21)
+* Fixed bugs and added auto-detect xsd for reading zipped xml files.
+* Fixed bug in StoxAcoustic for ICESAcoustic data, where log-distances with no acoustic records were deleted.
+* Changed to sort in C-locale in createOrderKey() using the stringi-package, to comply with data.table's philosophy of platform independence.
+
 # RstoxData v1.1.6 (2021-05-04)
 * Added sanitizeFilter() to avoid system calls in filter.
-* Remoevd hard coded conversions in ICESBiotic(), moving the responsibility of such conversions to the translation functions.
+* Removed hard coded conversions in ICESBiotic(), moving the responsibility of such conversions to the translation functions.
 * Optimized createOrderKey() for faster execution.
 * Renamed ReportICESAcoustic(), ReportICESBiotic() and ReportICESDatras() to WriteICESAcoustic(), WriteICESBiotic() and WriteICESDatras(), respectievly.
 
