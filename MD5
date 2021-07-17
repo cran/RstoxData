@@ -1,7 +1,7 @@
-e54217610313b7e526698f7868c6a17b *DESCRIPTION
+f315af92f4ea7b19e7904d7e8df0272d *DESCRIPTION
 ebf63220806789969ade22525726091d *NAMESPACE
-9b890adc5252ae2f16c844e2f27dea59 *NEWS.md
-c85c888e3d0407d2ea61c955c3d60d46 *R/DefineAndUpdateVariables.R
+5756bb6cd050dabcb7ee4083fdefeb8b *NEWS.md
+455b4f8fe85f105c7f4127025d90dc9d *R/DefineAndUpdateVariables.R
 e7058ebf4232e675dffb81e79c4d2ed0 *R/Definitions.R
 98c3938aaa5ca0725e1fc2b0ffa7a3b5 *R/Filter.R
 c1f8bed11308c2eb9bbd8f17073fe43c *R/RcppExports.R
@@ -131,11 +131,11 @@ bcea89cf48baf419a215ceadf5ff9057 *man/setRstoxPrecisionLevel.Rd
 b48f590c02879004a0082125919f5531 *man/stoxFunctionAttributes.Rd
 70f8b02aab0477c3d83917cacedeec7c *man/xsdObjects.Rd
 8225f81431de19f493e1f76903217993 *src/RcppExports.cpp
-5ffa9314d0be54da27731668ea7d461a *src/miniz.c
-87f4f5204a8ed4df8da126b08902a83c *src/miniz/miniz.h
-89e21f4ffe3198bffdfb2f2280b0beb7 *src/pugixml/pugiconfig.hpp
-7f004a6493baaa5a0790d8500188dfb7 *src/pugixml/pugixml.cpp
-81e59b28e1c9e96abe78c3d8b09d9cbf *src/pugixml/pugixml.hpp
+393aceac61e37f282a1de75567124900 *src/miniz.c
+dadc09c80c97b8cbfaceb07ba715a683 *src/miniz/miniz.h
+467aa9253b21720f7189a82f6f8c797b *src/pugixml/pugiconfig.hpp
+e5974545e6ad69acc5e3ffbfcecbec7f *src/pugixml/pugixml.cpp
+8c67a75716677643d5faf2664f7117a8 *src/pugixml/pugixml.hpp
 0bb5fd4bcb29cfd13cdcae338dab1286 *src/readXml.cpp
 89564bdb0592fd6eb576dc02b0d88c8d *src/readXmlStream.cpp
 d3bb2766d5acf7cba2427fb606dd8931 *src/xmlfile.cpp
